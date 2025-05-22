@@ -24,7 +24,6 @@ import { useWebcam } from "../../hooks/use-webcam";
 import { AudioRecorder } from "../../lib/audio-recorder";
 import AudioPulse from "../audio-pulse/AudioPulse";
 import "./control-tray.scss";
-import SettingsDialog from "../settings-dialog/SettingsDialog";
 
 export type ControlTrayProps = {
   videoRef: RefObject<HTMLVideoElement>;
@@ -213,7 +212,6 @@ function ControlTray({
         </div>
         <span className="text-indicator">Streaming</span>
       </div>
-      {enableEditingSettings ? <SettingsDialog /> : ""}
     </section>
   );
 }

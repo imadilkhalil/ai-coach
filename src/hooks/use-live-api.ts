@@ -39,7 +39,10 @@ export function useLiveAPI(options: LiveClientOptions): UseLiveAPIResults {
   const audioStreamerRef = useRef<AudioStreamer | null>(null);
 
   const [model, setModel] = useState<string>("models/gemini-2.0-flash-exp");
-  const [config, setConfig] = useState<LiveConnectConfig>({});
+  const [config, setConfig] = useState<LiveConnectConfig>({
+    systemInstruction:
+      "You are a personal AI coach. The coach will be the impersonation of target audience such as for recruiters it will impersonate as a candidate, for sales team it will impersonate as a customer.",
+  });
   const [connected, setConnected] = useState(false);
   const [volume, setVolume] = useState(0);
 
