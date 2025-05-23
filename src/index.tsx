@@ -20,20 +20,45 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { LiveAPIProvider } from './contexts/LiveAPIContext';
+import { InteractionType, PublicClientApplication } from '@azure/msal-browser';
+import {
+  MsalProvider,
+  MsalAuthenticationTemplate,
+} from '@azure/msal-react';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== 'string') {
   throw new Error('set REACT_APP_GEMINI_API_KEY in .env');
 }
 
+const AZURE_CLIENT_ID = process.env.REACT_APP_AZURE_CLIENT_ID as string;
+const AZURE_TENANT_ID = process.env.REACT_APP_AZURE_TENANT_ID as string;
+if (!AZURE_CLIENT_ID || !AZURE_TENANT_ID) {
+  throw new Error(
+    'set REACT_APP_AZURE_CLIENT_ID and REACT_APP_AZURE_TENANT_ID in .env'
+  );
+}
+
+const msalInstance = new PublicClientApplication({
+  auth: {
+    clientId: AZURE_CLIENT_ID,
+    authority: `https://login.microsoftonline.com/${AZURE_TENANT_ID}`,
+    redirectUri: window.location.origin,
+  },
+});
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <LiveAPIProvider options={{ apiKey: API_KEY }}>
-      <App />
-    </LiveAPIProvider>
+    <MsalProvider instance={msalInstance}>
+      <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
+        <LiveAPIProvider options={{ apiKey: API_KEY }}>
+          <App />
+        </LiveAPIProvider>
+      </MsalAuthenticationTemplate>
+    </MsalProvider>
   </React.StrictMode>
 );
 
