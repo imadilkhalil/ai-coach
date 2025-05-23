@@ -16,52 +16,66 @@
 
 import { useRef, useState } from "react";
 import "./App.scss";
-import { LiveAPIProvider } from "./contexts/LiveAPIContext";
+import { useLiveAPIContext } from "./contexts/LiveAPIContext";
 import SidePanel from "./components/side-panel/SidePanel";
 import ControlTray from "./components/control-tray/ControlTray";
+import LandingPage, { Persona } from "./components/landing/LandingPage";
 import cn from "classnames";
 
-const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
-if (typeof API_KEY !== "string") {
-  throw new Error("set REACT_APP_GEMINI_API_KEY in .env");
-}
-
 function App() {
-  // this video reference is used for displaying the active stream, whether that is the webcam or screen capture
-  // feel free to style as you see fit
+  const { setConfig, config } = useLiveAPIContext();
+  const [persona, setPersona] = useState<Persona | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  // either the screen capture, the video or null, if null we hide it
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+
+  const personaInstructions: Record<Persona, string> = {
+    prospect:
+      "You are a potential customer receiving a cold call. Respond realistically to help practice introductions.",
+    lead:
+      "You are a business lead evaluating a company. Engage in discussion and raise objections when appropriate.",
+    candidate:
+      "You are a job candidate speaking with a recruiter about an open role.",
+  };
+
+  const handleSelect = (p: Persona) => {
+    setConfig({
+      ...config,
+      systemInstruction:
+        (typeof config.systemInstruction === "string"
+          ? config.systemInstruction
+          : "") + `\n\n${personaInstructions[p]}`,
+    });
+    setPersona(p);
+  };
+
+  if (!persona) {
+    return <LandingPage onSelect={handleSelect} />;
+  }
 
   return (
     <div className="App">
-      <LiveAPIProvider options={{ apiKey: API_KEY }}>
-        <div className="streaming-console">
-          <SidePanel />
-          <main>
-            <div className="main-app-area">
-              {/* APP goes here */}
-              <video
-                className={cn("stream", {
-                  hidden: !videoRef.current || !videoStream,
-                })}
-                ref={videoRef}
-                autoPlay
-                playsInline
-              />
-            </div>
+      <div className="streaming-console">
+        <SidePanel />
+        <main>
+          <div className="main-app-area">
+            <video
+              className={cn("stream", {
+                hidden: !videoRef.current || !videoStream,
+              })}
+              ref={videoRef}
+              autoPlay
+              playsInline
+            />
+          </div>
 
-            <ControlTray
-              videoRef={videoRef}
-              supportsVideo={true}
-              onVideoStreamChange={setVideoStream}
-              enableEditingSettings={true}
-            >
-              {/* put your own buttons here */}
-            </ControlTray>
-          </main>
-        </div>
-      </LiveAPIProvider>
+          <ControlTray
+            videoRef={videoRef}
+            supportsVideo={true}
+            onVideoStreamChange={setVideoStream}
+            enableEditingSettings={true}
+          ></ControlTray>
+        </main>
+      </div>
     </div>
   );
 }
