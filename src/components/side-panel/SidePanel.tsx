@@ -16,10 +16,12 @@
 
 import "./react-select.scss";
 import cn from "classnames";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, ChangeEvent } from "react";
 import { RiSidebarFoldLine, RiSidebarUnfoldLine } from "react-icons/ri";
 import Select from "react-select";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
+import ResponseModalitySelector from "../settings-dialog/ResponseModalitySelector";
+import VoiceSelector from "../settings-dialog/VoiceSelector";
 import { useLoggerStore } from "../../lib/store-logger";
 import Logger, { LoggerFilterType } from "../logger/Logger";
 import "./side-panel.scss";
@@ -31,7 +33,7 @@ const filterOptions = [
 ];
 
 export default function SidePanel() {
-  const { connected, client } = useLiveAPIContext();
+  const { connected, client, config, setConfig } = useLiveAPIContext();
   const [open, setOpen] = useState(true);
   const loggerRef = useRef<HTMLDivElement>(null);
   const loggerLastHeightRef = useRef<number>(-1);
@@ -43,6 +45,34 @@ export default function SidePanel() {
     label: string;
   } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const systemInstruction = useMemo(() => {
+    if (!config.systemInstruction) {
+      return "";
+    }
+    if (typeof config.systemInstruction === "string") {
+      return config.systemInstruction;
+    }
+    if (Array.isArray(config.systemInstruction)) {
+      return config.systemInstruction
+        .map((p) => (typeof p === "string" ? p : p.text))
+        .join("\n");
+    }
+    if (typeof config.systemInstruction === "object" && "parts" in config.systemInstruction) {
+      return config.systemInstruction.parts?.map((p) => p.text).join("\n") || "";
+    }
+    return "";
+  }, [config]);
+
+  const updateSystemInstruction = useCallback(
+    (ev: ChangeEvent<HTMLTextAreaElement>) => {
+      setConfig({
+        ...config,
+        systemInstruction: ev.target.value,
+      });
+    },
+    [config, setConfig]
+  );
 
   //scroll the log to the bottom when new logs come in
   useEffect(() => {
@@ -76,7 +106,7 @@ export default function SidePanel() {
   return (
     <div className={`side-panel ${open ? "open" : ""}`}>
       <header className="top">
-        <h2>Console</h2>
+        <h2>Instructions</h2>
         {open ? (
           <button className="opener" onClick={() => setOpen(false)}>
             <RiSidebarFoldLine color="#b4b8bb" />
@@ -87,6 +117,18 @@ export default function SidePanel() {
           </button>
         )}
       </header>
+      <section className="settings-section">
+        <div className="mode-selectors">
+          <ResponseModalitySelector />
+          <VoiceSelector />
+        </div>
+        <h3>System Instructions</h3>
+        <textarea
+          className="system"
+          onChange={updateSystemInstruction}
+          value={systemInstruction}
+        />
+      </section>
       <section className="indicators">
         <Select
           className="react-select"

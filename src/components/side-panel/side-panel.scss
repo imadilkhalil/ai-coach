@@ -242,3 +242,42 @@
   line-height: 1.75rem;
   padding: 4px;
 }
+
+.settings-section {
+  padding: 0 20px;
+
+  .mode-selectors {
+    display: flex;
+    gap: 1rem;
+    padding: 8px 0;
+  }
+
+  .select-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    height: 70px;
+
+    label {
+      font-size: 10px;
+    }
+  }
+
+  textarea.system {
+    border-radius: 12px;
+    background-color: var(--Neutral-15);
+    color: var(--Neutral-80);
+    margin-top: 8px;
+    font-family: Google Sans, sans-serif;
+    line-height: 21px;
+    font-size: 16px;
+    field-sizing: content;
+    width: calc(100% - 16px);
+    min-height: 150px;
+    height: 150px;
+    padding: 8px;
+    border: 0;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+}
