@@ -21,12 +21,14 @@ import SidePanel from "./components/side-panel/SidePanel";
 import ControlTray from "./components/control-tray/ControlTray";
 import LandingPage, { Persona } from "./components/landing/LandingPage";
 import cn from "classnames";
+import { useMsal } from "@azure/msal-react";
 
 function App() {
   const { setConfig, config } = useLiveAPIContext();
   const [persona, setPersona] = useState<Persona | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  const { instance, accounts, inProgress } = useMsal();
 
   const personaInstructions: Record<Persona, string> = {
     prospect:
@@ -55,6 +57,7 @@ function App() {
   return (
     <div className="App">
       <div className="streaming-console">
+        <div className="header">{accounts[0]?.name}</div>
         <SidePanel />
         <main>
           <div className="main-app-area">

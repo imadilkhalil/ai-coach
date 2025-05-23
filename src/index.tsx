@@ -20,11 +20,10 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { LiveAPIProvider } from './contexts/LiveAPIContext';
-import { PublicClientApplication } from '@azure/msal-browser';
+import { InteractionType, PublicClientApplication } from '@azure/msal-browser';
 import {
   MsalProvider,
   MsalAuthenticationTemplate,
-  InteractionType,
 } from '@azure/msal-react';
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
