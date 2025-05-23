@@ -17,9 +17,14 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
+import { LiveAPIProvider } from './contexts/LiveAPIContext';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('renders landing page', () => {
+  render(
+    <LiveAPIProvider options={{ apiKey: 'test-key' }}>
+      <App />
+    </LiveAPIProvider>
+  );
+  const heading = screen.getByText(/select a persona/i);
+  expect(heading).toBeInTheDocument();
 });
