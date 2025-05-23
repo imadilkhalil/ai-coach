@@ -56,7 +56,7 @@ export interface LiveClientEventTypes {
   toolcall: (toolCall: LiveServerToolCall) => void;
   // Emitted when a tool call is cancelled
   toolcallcancellation: (
-    toolcallCancellation: LiveServerToolCallCancellation
+    toolcallCancellation: LiveServerToolCallCancellation,
   ) => void;
   // Emitted when the current turn is complete
   turncomplete: () => void;
@@ -101,11 +101,16 @@ export class GenAILiveClient extends EventEmitter<LiveClientEventTypes> {
     this.onmessage = this.onmessage.bind(this);
   }
 
-  protected log(type: string, message: StreamingLog["message"]) {
+  protected log(
+    type: string,
+    message: StreamingLog["message"],
+    audio?: ArrayBuffer,
+  ) {
     const log: StreamingLog = {
       date: new Date(),
       type,
       message,
+      audio,
     };
     this.emit("log", log);
   }
@@ -166,7 +171,7 @@ export class GenAILiveClient extends EventEmitter<LiveClientEventTypes> {
   protected onclose(e: CloseEvent) {
     this.log(
       `server.close`,
-      `disconnected ${e.reason ? `with reason: ${e.reason}` : ``}`
+      `disconnected ${e.reason ? `with reason: ${e.reason}` : ``}`,
     );
     this.emit("close", e);
   }
@@ -207,7 +212,7 @@ export class GenAILiveClient extends EventEmitter<LiveClientEventTypes> {
 
         // when its audio that is returned for modelTurn
         const audioParts = parts.filter(
-          (p) => p.inlineData && p.inlineData.mimeType?.startsWith("audio/pcm")
+          (p) => p.inlineData && p.inlineData.mimeType?.startsWith("audio/pcm"),
         );
         const base64s = audioParts.map((p) => p.inlineData?.data);
 
@@ -219,7 +224,7 @@ export class GenAILiveClient extends EventEmitter<LiveClientEventTypes> {
           if (b64) {
             const data = base64ToArrayBuffer(b64);
             this.emit("audio", data);
-            this.log(`server.audio`, `buffer (${data.byteLength})`);
+            this.log(`server.audio`, `buffer (${data.byteLength})`, data);
           }
         });
         if (!otherParts.length) {
@@ -243,10 +248,14 @@ export class GenAILiveClient extends EventEmitter<LiveClientEventTypes> {
   sendRealtimeInput(chunks: Array<{ mimeType: string; data: string }>) {
     let hasAudio = false;
     let hasVideo = false;
+    let audioData: ArrayBuffer | undefined;
     for (const ch of chunks) {
       this.session?.sendRealtimeInput({ media: ch });
       if (ch.mimeType.includes("audio")) {
         hasAudio = true;
+        if (!audioData) {
+          audioData = base64ToArrayBuffer(ch.data);
+        }
       }
       if (ch.mimeType.includes("image")) {
         hasVideo = true;
@@ -259,11 +268,11 @@ export class GenAILiveClient extends EventEmitter<LiveClientEventTypes> {
       hasAudio && hasVideo
         ? "audio + video"
         : hasAudio
-        ? "audio"
-        : hasVideo
-        ? "video"
-        : "unknown";
-    this.log(`client.realtimeInput`, message);
+          ? "audio"
+          : hasVideo
+            ? "video"
+            : "unknown";
+    this.log(`client.realtimeInput`, message, audioData);
   }
 
   /**

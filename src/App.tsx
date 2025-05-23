@@ -20,6 +20,7 @@ import { useLiveAPIContext } from "./contexts/LiveAPIContext";
 import SidePanel from "./components/side-panel/SidePanel";
 import ControlTray from "./components/control-tray/ControlTray";
 import LandingPage, { Persona } from "./components/landing/LandingPage";
+import AudioLogPanel from "./components/audio-log-panel/AudioLogPanel";
 import cn from "classnames";
 import { useMsal } from "@azure/msal-react";
 
@@ -78,6 +79,7 @@ function App() {
             enableEditingSettings={true}
           ></ControlTray>
         </main>
+        <AudioLogPanel />
       </div>
     </div>
   );
