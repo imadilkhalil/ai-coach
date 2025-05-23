@@ -21,7 +21,7 @@ export type GetAudioContextOptions = AudioContextOptions & {
 const map: Map<string, AudioContext> = new Map();
 
 export const audioContext: (
-  options?: GetAudioContextOptions
+  options?: GetAudioContextOptions,
 ) => Promise<AudioContext> = (() => {
   const didInteract = new Promise((res) => {
     window.addEventListener("pointerdown", res, { once: true });
@@ -69,4 +69,48 @@ export function base64ToArrayBuffer(base64: string) {
     bytes[i] = binaryString.charCodeAt(i);
   }
   return bytes.buffer;
+}
+
+/**
+ * Convert PCM16 audio data into a playable WAV Blob.
+ */
+export function pcm16ToWav(pcm: ArrayBuffer, sampleRate: number = 16000): Blob {
+  const numChannels = 1;
+  const byteRate = sampleRate * numChannels * 2;
+  const blockAlign = numChannels * 2;
+  const buffer = new ArrayBuffer(44 + pcm.byteLength);
+  const view = new DataView(buffer);
+  let offset = 0;
+
+  function writeString(s: string) {
+    for (let i = 0; i < s.length; i++) {
+      view.setUint8(offset++, s.charCodeAt(i));
+    }
+  }
+
+  writeString("RIFF");
+  view.setUint32(offset, 36 + pcm.byteLength, true);
+  offset += 4;
+  writeString("WAVE");
+  writeString("fmt ");
+  view.setUint32(offset, 16, true);
+  offset += 4;
+  view.setUint16(offset, 1, true);
+  offset += 2;
+  view.setUint16(offset, numChannels, true);
+  offset += 2;
+  view.setUint32(offset, sampleRate, true);
+  offset += 4;
+  view.setUint32(offset, byteRate, true);
+  offset += 4;
+  view.setUint16(offset, blockAlign, true);
+  offset += 2;
+  view.setUint16(offset, 16, true);
+  offset += 2;
+  writeString("data");
+  view.setUint32(offset, pcm.byteLength, true);
+  offset += 4;
+
+  new Uint8Array(buffer, offset).set(new Uint8Array(pcm));
+  return new Blob([buffer], { type: "audio/wav" });
 }

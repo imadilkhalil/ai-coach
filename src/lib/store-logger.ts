@@ -28,7 +28,7 @@ interface StoreLoggerState {
 export const useLoggerStore = create<StoreLoggerState>((set, get) => ({
   maxLogs: 100,
   logs: [], //mockLogs,
-  log: ({ date, type, message }: StreamingLog) => {
+  log: ({ date, type, message, audio }: StreamingLog) => {
     set((state) => {
       const prevLog = state.logs.at(-1);
       if (prevLog && prevLog.type === type && prevLog.message === message) {
@@ -39,6 +39,7 @@ export const useLoggerStore = create<StoreLoggerState>((set, get) => ({
               date,
               type,
               message,
+              audio,
               count: prevLog.count ? prevLog.count + 1 : 1,
             } as StreamingLog,
           ],
@@ -51,6 +52,7 @@ export const useLoggerStore = create<StoreLoggerState>((set, get) => ({
             date,
             type,
             message,
+            audio,
           } as StreamingLog,
         ],
       };

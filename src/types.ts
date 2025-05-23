@@ -31,6 +31,8 @@ export type StreamingLog = {
   date: Date;
   type: string;
   count?: number;
+  /** optional audio data associated with the log */
+  audio?: ArrayBuffer;
   message:
     | string
     | ClientContentLog
