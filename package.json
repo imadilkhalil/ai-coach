@@ -15,7 +15,9 @@
     "react-syntax-highlighter": "^15.6.1",
     "sass": "^1.80.6",
     "web-vitals": "^2.1.4",
-    "zustand": "^5.0.1"
+    "zustand": "^5.0.1",
+    "@azure/msal-browser": "^3.0.0",
+    "@azure/msal-react": "^1.5.0"
   },
   "scripts": {
     "start-https": "HTTPS=true react-scripts start",
