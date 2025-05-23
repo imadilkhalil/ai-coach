@@ -1,0 +1,36 @@
+.audio-log-panel {
+  width: 200px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--Neutral-00);
+  color: var(--Neutral-90);
+  border-left: 1px solid var(--gray-600);
+
+  h2 {
+    margin: 12px;
+    font-size: 21px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0 12px;
+    margin: 0;
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+
+  li {
+    margin-bottom: 8px;
+  }
+
+  li.user {
+    text-align: right;
+    color: var(--Green-500);
+  }
+
+  li.ai {
+    text-align: left;
+    color: var(--Blue-500);
+  }
+}
