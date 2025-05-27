@@ -54,7 +54,7 @@ const MediaStreamButton = memo(
       <button className="action-button" onClick={start}>
         <span className="material-symbols-outlined">{offIcon}</span>
       </button>
-    )
+    ),
 );
 
 function ControlTray({
@@ -71,10 +71,13 @@ function ControlTray({
   const [inVolume, setInVolume] = useState(0);
   const [audioRecorder] = useState(() => new AudioRecorder());
   const [muted, setMuted] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<BlobPart[]>([]);
+  const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
   const connectButtonRef = useRef<HTMLButtonElement>(null);
 
-  const { client, connected, connect, disconnect, volume } =
+  const { client, connected, connect, disconnect, volume, audioStreamerRef } =
     useLiveAPIContext();
 
   useEffect(() => {
@@ -85,28 +88,62 @@ function ControlTray({
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--volume",
-      `${Math.max(5, Math.min(inVolume * 200, 8))}px`
+      `${Math.max(5, Math.min(inVolume * 200, 8))}px`,
     );
   }, [inVolume]);
 
   useEffect(() => {
     const onData = (base64: string) => {
       client.sendRealtimeInput([
-        {
-          mimeType: "audio/pcm;rate=16000",
-          data: base64,
-        },
+        { mimeType: "audio/pcm;rate=16000", data: base64 },
       ]);
     };
+
+    async function startRecorder() {
+      if (recorderRef.current || !audioStreamerRef.current) return;
+
+      if (recordingUrl) {
+        URL.revokeObjectURL(recordingUrl);
+        setRecordingUrl(null);
+      }
+
+      await audioRecorder.start();
+      const mixCtx = audioStreamerRef.current.context;
+      const micSource = mixCtx.createMediaStreamSource(audioRecorder.stream!);
+      const dest = mixCtx.createMediaStreamDestination();
+      micSource.connect(dest);
+      audioStreamerRef.current.gainNode.connect(dest);
+
+      const rec = new MediaRecorder(dest.stream, { mimeType: "audio/webm" });
+      recordedChunksRef.current = [];
+      rec.ondataavailable = (e) => recordedChunksRef.current.push(e.data);
+      rec.start();
+      recorderRef.current = rec;
+    }
+
+    function stopRecorder() {
+      if (recorderRef.current) {
+        recorderRef.current.stop();
+        const blob = new Blob(recordedChunksRef.current, {
+          type: "audio/webm",
+        });
+        setRecordingUrl(URL.createObjectURL(blob));
+        recorderRef.current = null;
+        recordedChunksRef.current = [];
+      }
+    }
+
     if (connected && !muted && audioRecorder) {
-      audioRecorder.on("data", onData).on("volume", setInVolume).start();
+      audioRecorder.on("data", onData).on("volume", setInVolume);
+      startRecorder();
     } else {
       audioRecorder.stop();
+      stopRecorder();
     }
     return () => {
       audioRecorder.off("data", onData).off("volume", setInVolume);
     };
-  }, [connected, client, muted, audioRecorder]);
+  }, [connected, client, muted, audioRecorder, audioStreamerRef]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -212,6 +249,9 @@ function ControlTray({
         </div>
         <span className="text-indicator">Streaming</span>
       </div>
+      {recordingUrl && (
+        <audio className="conversation-playback" controls src={recordingUrl} />
+      )}
     </section>
   );
 }
