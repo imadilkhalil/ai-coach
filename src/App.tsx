@@ -19,15 +19,17 @@ import "./App.scss";
 import { useLiveAPIContext } from "./contexts/LiveAPIContext";
 import SidePanel from "./components/side-panel/SidePanel";
 import ControlTray from "./components/control-tray/ControlTray";
+import SessionPlayback from "./components/session-playback/SessionPlayback";
 import LandingPage, { Persona } from "./components/landing/LandingPage";
 import cn from "classnames";
 import { useMsal } from "@azure/msal-react";
 
 function App() {
-  const { setConfig, config } = useLiveAPIContext();
+  const { setConfig, config, connected } = useLiveAPIContext();
   const [persona, setPersona] = useState<Persona | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
   const { instance, accounts, inProgress } = useMsal();
 
   const personaInstructions: Record<Persona, string> = {
@@ -69,6 +71,9 @@ function App() {
               autoPlay
               playsInline
             />
+            {recordingBlob && !connected && (
+              <SessionPlayback blob={recordingBlob} />
+            )}
           </div>
 
           <ControlTray
@@ -76,6 +81,7 @@ function App() {
             supportsVideo={true}
             onVideoStreamChange={setVideoStream}
             enableEditingSettings={true}
+            onRecordingComplete={setRecordingBlob}
           ></ControlTray>
         </main>
       </div>
