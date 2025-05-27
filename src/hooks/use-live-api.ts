@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  MutableRefObject,
+} from "react";
 import { GenAILiveClient } from "../lib/genai-live-client";
 import { LiveClientOptions } from "../types";
 import { AudioStreamer } from "../lib/audio-streamer";
@@ -32,6 +39,8 @@ export type UseLiveAPIResults = {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   volume: number;
+  /** Reference to the audio streamer used for playback */
+  audioStreamerRef: MutableRefObject<AudioStreamer | null>;
 };
 
 export function useLiveAPI(options: LiveClientOptions): UseLiveAPIResults {
@@ -114,5 +123,6 @@ export function useLiveAPI(options: LiveClientOptions): UseLiveAPIResults {
     connect,
     disconnect,
     volume,
+    audioStreamerRef,
   };
 }
