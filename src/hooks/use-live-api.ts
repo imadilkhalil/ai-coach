@@ -32,11 +32,13 @@ export type UseLiveAPIResults = {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   volume: number;
+  audioOutputStream: MediaStream | null;
 };
 
 export function useLiveAPI(options: LiveClientOptions): UseLiveAPIResults {
   const client = useMemo(() => new GenAILiveClient(options), [options]);
   const audioStreamerRef = useRef<AudioStreamer | null>(null);
+  const [audioOutputStream, setAudioOutputStream] = useState<MediaStream | null>(null);
 
   const [model, setModel] = useState<string>("models/gemini-2.0-flash-exp");
   const [config, setConfig] = useState<LiveConnectConfig>({
@@ -51,6 +53,7 @@ export function useLiveAPI(options: LiveClientOptions): UseLiveAPIResults {
     if (!audioStreamerRef.current) {
       audioContext({ id: "audio-out" }).then((audioCtx: AudioContext) => {
         audioStreamerRef.current = new AudioStreamer(audioCtx);
+        setAudioOutputStream(audioStreamerRef.current.getStream());
         audioStreamerRef.current
           .addWorklet<any>("vumeter-out", VolMeterWorket, (ev: any) => {
             setVolume(ev.data.volume);
@@ -114,5 +117,6 @@ export function useLiveAPI(options: LiveClientOptions): UseLiveAPIResults {
     connect,
     disconnect,
     volume,
+    audioOutputStream,
   };
 }

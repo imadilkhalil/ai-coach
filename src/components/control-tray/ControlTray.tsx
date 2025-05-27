@@ -22,6 +22,7 @@ import { UseMediaStreamResult } from "../../hooks/use-media-stream-mux";
 import { useScreenCapture } from "../../hooks/use-screen-capture";
 import { useWebcam } from "../../hooks/use-webcam";
 import { AudioRecorder } from "../../lib/audio-recorder";
+import { useSessionRecorder } from "../../hooks/use-session-recorder";
 import AudioPulse from "../audio-pulse/AudioPulse";
 import "./control-tray.scss";
 
@@ -74,7 +75,9 @@ function ControlTray({
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
   const connectButtonRef = useRef<HTMLButtonElement>(null);
 
-  const { client, connected, connect, disconnect, volume } =
+  const { startRecording, stopRecording, recording } = useSessionRecorder();
+
+  const { client, connected, connect, disconnect, volume, audioOutputStream } =
     useLiveAPIContext();
 
   useEffect(() => {
@@ -99,14 +102,29 @@ function ControlTray({
       ]);
     };
     if (connected && !muted && audioRecorder) {
-      audioRecorder.on("data", onData).on("volume", setInVolume).start();
+      audioRecorder
+        .on("data", onData)
+        .on("volume", setInVolume)
+        .start()
+        .then(() => {
+          if (!recording) {
+            const streams: MediaStream[] = [];
+            if (activeVideoStream) streams.push(activeVideoStream);
+            if (audioRecorder.stream) streams.push(audioRecorder.stream);
+            if (audioOutputStream) streams.push(audioOutputStream);
+            startRecording(streams);
+          }
+        });
     } else {
       audioRecorder.stop();
+      if (recording) {
+        stopRecording();
+      }
     }
     return () => {
       audioRecorder.off("data", onData).off("volume", setInVolume);
     };
-  }, [connected, client, muted, audioRecorder]);
+  }, [connected, client, muted, audioRecorder, recording, activeVideoStream, audioOutputStream, startRecording, stopRecording]);
 
   useEffect(() => {
     if (videoRef.current) {

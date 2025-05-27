@@ -33,6 +33,7 @@ export class AudioStreamer {
   // Web Audio API nodes. source => gain => destination
   public gainNode: GainNode;
   public source: AudioBufferSourceNode;
+  public destination: MediaStreamAudioDestinationNode;
   private endOfQueueAudioSource: AudioBufferSourceNode | null = null;
 
   public onComplete = () => {};
@@ -40,8 +41,14 @@ export class AudioStreamer {
   constructor(public context: AudioContext) {
     this.gainNode = this.context.createGain();
     this.source = this.context.createBufferSource();
+    this.destination = this.context.createMediaStreamDestination();
+    this.gainNode.connect(this.destination);
     this.gainNode.connect(this.context.destination);
     this.addPCM16 = this.addPCM16.bind(this);
+  }
+
+  getStream(): MediaStream {
+    return this.destination.stream;
   }
 
   async addWorklet<T extends (d: any) => void>(
@@ -231,6 +238,7 @@ export class AudioStreamer {
     setTimeout(() => {
       this.gainNode.disconnect();
       this.gainNode = this.context.createGain();
+      this.gainNode.connect(this.destination);
       this.gainNode.connect(this.context.destination);
     }, 200);
   }
