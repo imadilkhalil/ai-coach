@@ -15,11 +15,30 @@ export function useSessionRecorder(): UseSessionRecorderResult {
 
   const startRecording = useCallback((streams: MediaStream[]) => {
     if (recorderRef.current || streams.length === 0) return;
+
     const combined = new MediaStream();
+    const audioTracks: MediaStreamTrack[] = [];
+
     streams.forEach((s) => {
-      s.getTracks().forEach((t) => combined.addTrack(t));
+      s.getVideoTracks().forEach((t) => combined.addTrack(t));
+      audioTracks.push(...s.getAudioTracks());
     });
+
+    if (audioTracks.length === 1) {
+      combined.addTrack(audioTracks[0]);
+    } else if (audioTracks.length > 1) {
+      const ctx = new AudioContext();
+      const destination = ctx.createMediaStreamDestination();
+      audioTracks.forEach((t) => {
+        const src = ctx.createMediaStreamSource(new MediaStream([t]));
+        src.connect(destination);
+      });
+      const mixed = destination.stream.getAudioTracks()[0];
+      if (mixed) combined.addTrack(mixed);
+    }
+
     if (combined.getTracks().length === 0) return;
+
     const rec = new MediaRecorder(combined);
     rec.ondataavailable = (e) => {
       if (e.data && e.data.size > 0) {
