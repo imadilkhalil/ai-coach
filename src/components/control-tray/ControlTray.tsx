@@ -79,8 +79,7 @@ function ControlTray({
 
   const { startRecording, stopRecording, recording, blob } = useSessionRecorder();
 
-  const { client, connected, connect, disconnect, volume, audioOutputStream } =
-    useLiveAPIContext();
+  const { client, connected, connect, disconnect, volume } = useLiveAPIContext();
 
   useEffect(() => {
     if (!connected && connectButtonRef.current) {
@@ -113,7 +112,6 @@ function ControlTray({
             const streams: MediaStream[] = [];
             if (activeVideoStream) streams.push(activeVideoStream);
             if (audioRecorder.stream) streams.push(audioRecorder.stream);
-            if (audioOutputStream) streams.push(audioOutputStream);
             startRecording(streams);
           }
         });
@@ -126,7 +124,7 @@ function ControlTray({
     return () => {
       audioRecorder.off("data", onData).off("volume", setInVolume);
     };
-  }, [connected, client, muted, audioRecorder, recording, activeVideoStream, audioOutputStream, startRecording, stopRecording]);
+  }, [connected, client, muted, audioRecorder, recording, activeVideoStream, startRecording, stopRecording]);
 
   useEffect(() => {
     if (blob && onRecordingComplete) {
